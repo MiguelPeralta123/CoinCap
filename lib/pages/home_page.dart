@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     http = GetIt.instance.get<HttpService>();
-    selectedCoin = "bitcoin";
+    selectedCoin = "Bitcoin";
   }
 
   @override
@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage> {
 
     List<DropdownMenuItem<String>> items = coins.map((coin) {
       return DropdownMenuItem(
-        value: coin.toLowerCase(),
+        value: coin,
         child: Text(
           coin,
           style: const TextStyle(
@@ -70,27 +70,30 @@ class _HomePageState extends State<HomePage> {
       );
     },).toList();
 
-    return DropdownButton(
-      items: items,
-      onChanged: (value) {
-        setState(() {
-          selectedCoin = value.toString();
-        });
-      },
-      value: selectedCoin,
-      dropdownColor: const Color.fromRGBO(83, 88, 206, 1.0),
-      icon: const Icon(
-        Icons.arrow_drop_down_sharp,
-        color: Colors.white,
+    return Container(
+      margin: const EdgeInsets.only(top: 15),
+      child: DropdownButton(
+        items: items,
+        onChanged: (value) {
+          setState(() {
+            selectedCoin = value.toString();
+          });
+        },
+        value: selectedCoin,
+        dropdownColor: const Color.fromRGBO(83, 88, 206, 1.0),
+        icon: const Icon(
+          Icons.arrow_drop_down_sharp,
+          color: Colors.white,
+        ),
+        iconSize: 30,
+        underline: Container(),
       ),
-      iconSize: 30,
-      underline: Container(),
     );
   }
 
   Widget coinData() {
     return FutureBuilder(
-      future: http.get("/coins/$selectedCoin"),
+      future: http.get("/coins/${selectedCoin.toLowerCase()}"),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           Map data = jsonDecode(snapshot.data.toString());
@@ -102,24 +105,13 @@ class _HomePageState extends State<HomePage> {
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GestureDetector(
-                onDoubleTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return DetailsPage(currentPrices: currentPrices);
-                      },
-                    ),
-                  );
-                },
-                child: coinImageWidget(imageUrl),
-              ),
+              coinImageWidget(imageUrl),
               currentPriceWidget(currentPrices["usd"]),
               changePercentageWidget(changePercentage),
               coinDescriptionWidget(description),
+              seeDetailsButton(context, currentPrices),
             ],
           );
         } else {
@@ -137,6 +129,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       height: deviceHeight * 0.15,
       width: deviceWidth * 0.15,
+      margin: const EdgeInsets.symmetric(vertical: 15),
       decoration: BoxDecoration(
         image: DecorationImage(
           image: NetworkImage(url),
@@ -146,23 +139,27 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget currentPriceWidget(num usdPrice) {
-    return Text(
-      "${usdPrice.toStringAsFixed(2)} USD",
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 30,
-        fontWeight: FontWeight.w400,
+    return Center(
+      child: Text(
+        "${usdPrice.toStringAsFixed(2)} USD",
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }
 
   Widget changePercentageWidget(num changePercentage) {
-    return Text(
-      "${changePercentage.toString()}%",
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 15,
-        fontWeight: FontWeight.w300
+    return Center(
+      child: Text(
+        "${changePercentage.toString()}%",
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w300
+        ),
       ),
     );
   }
@@ -173,6 +170,7 @@ class _HomePageState extends State<HomePage> {
       width: deviceWidth * 0.90,
       margin: EdgeInsets.symmetric(
         vertical: deviceHeight * 0.05,
+        horizontal: 10,
       ),
       padding: EdgeInsets.symmetric(
         vertical: deviceHeight * 0.02,
@@ -186,6 +184,31 @@ class _HomePageState extends State<HomePage> {
         description,
         style: const TextStyle(
           color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget seeDetailsButton(context, currentPrices) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (BuildContext context) {
+                return DetailsPage(coinName: selectedCoin, currentPrices: currentPrices);
+              },
+            ),
+          );
+        },
+        child: const Text(
+          "See Details",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
